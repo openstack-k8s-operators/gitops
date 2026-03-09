@@ -62,6 +62,12 @@ We’re using sync-waves annotations for specific jobs and actions.
 
 The range -20;20 is reserved.
 
+### PostDelete hooks
+
+PostDelete hooks run cleanup Jobs when ArgoCD Applications are deleted (e.g., orphaned
+PVCs, Vault resources). See [ArgoCD postDelete hooks](#argocd-postdelete-hooks)
+in Consume proposed components for available components and usage.
+
 ### Healthchecks
 
 TBD
@@ -181,6 +187,50 @@ These annotations enable ArgoCD to determine the order that resources are create
       - https://github.com/openstack-k8s-operators/gitops/components/argocd/annotations?ref=TAG
     # [...]
     ```
+
+### ArgoCD postDelete hooks
+
+PostDelete hooks run Jobs after an ArgoCD Application is deleted. They perform
+cleanup that would otherwise not happen automatically when resources are removed,
+such as orphaned PersistentVolumeClaims, Vault-related resources, or
+operator-specific CRs. [Learn more about ArgoCD resource hooks](https://argo-cd.readthedocs.io/en/stable/user-guide/resource_hooks/).
+
+**Available components**
+
+| Component | Purpose |
+|-----------|---------|
+| `components/argocd/hooks/postDelete/controlplane` | Waits for pods to terminate in `openstack` namespace, then deletes PVCs, VaultStaticSecrets, VaultAuth, VaultConnection, and Secrets |
+| `components/argocd/hooks/postDelete/dataplane` | Deletes all `OpenStackDataPlaneService` resources before namespace cleanup |
+| `components/argocd/hooks/postDelete/deploy-operators` | Deletes `cluster-observability-operator` ClusterServiceVersion (CSV) resources |
+
+**Example usage**
+
+Include the relevant postDelete component(s) in your Application or overlay, alongside
+the annotations component:
+
+```yaml
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+# [...]
+spec:
+  source:
+    # [...]
+    kustomize:
+      components:
+        - https://github.com/openstack-gitops/rhoso-gitops/components/argocd/annotations?ref=TAG
+        - https://github.com/openstack-gitops/rhoso-gitops/components/argocd/hooks/postDelete/controlplane?ref=TAG
+```
+
+From within an overlay or base kustomization:
+
+```yaml
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+components:
+  - https://github.com/openstack-gitops/rhoso-gitops/components/argocd/annotations?ref=TAG
+  - https://github.com/openstack-gitops/rhoso-gitops/components/argocd/hooks/postDelete/controlplane?ref=TAG
+  # [...]
+```
 
 ## External resources
 
