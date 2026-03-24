@@ -1,0 +1,119 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/openstack-k8s-operators/gitops/charts/rhoso-apps/values.schema.json",
+  "title": "rhoso-apps Helm chart values",
+  "description": "Validated against templates/ and the documentation block in values.yaml.",
+  "type": "object",
+  "required": [
+    "applicationNamespace",
+    "destinationServer",
+    "applications"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "applicationNamespace": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Namespace for Argo CD Application CRs (metadata.namespace).",
+      "pattern": "^[a-z0-9]([-a-z0-9]*[a-z0-9])?$"
+    },
+    "destinationServer": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Kubernetes API server URL for spec.destination.server.",
+      "format": "uri",
+      "pattern": "^https://"
+    },
+    "applications": {
+      "type": "object",
+      "minProperties": 1,
+      "description": "Map of Application name to Argo CD Application settings.",
+      "propertyNames": {
+        "description": "DNS-1123 label: lowercase alphanumeric and hyphens (e.g. openstack-operator-cr).",
+        "pattern": "^[a-z0-9]([-a-z0-9]{0,61}[a-z0-9])?$"
+      },
+      "additionalProperties": {
+        "$ref": "#/definitions/application"
+      }
+    }
+  },
+  "definitions": {
+    "application": {
+      "type": "object",
+      "description": "Per-application values under applications.<name>.",
+      "required": [
+        "enabled",
+        "repoURL",
+        "path",
+        "targetRevision",
+        "syncWave",
+        "syncOptions"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "If true, render an Application CR."
+        },
+        "repoURL": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Git repository URL for spec.source.repoURL.",
+          "format": "uri",
+          "pattern": "^https://"
+        },
+        "path": {
+          "type": "string",
+          "description": "Path inside the repo; empty string uses chart default '.'."
+        },
+        "targetRevision": {
+          "type": "string",
+          "description": "Branch, tag, or commit; empty string uses chart default 'HEAD'."
+        },
+        "syncWave": {
+          "type": "string",
+          "description": "Value for argocd.argoproj.io/sync-wave annotation."
+        },
+        "syncOptions": {
+          "type": "array",
+          "description": "Argo CD sync option strings merged into spec.syncPolicy.syncOptions.",
+          "minItems": 0,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "project": {
+          "type": "string",
+          "description": "Optional Argo CD AppProject; default in chart is 'default' if omitted."
+        },
+        "syncPolicy": {
+          "type": "object",
+          "description": "Optional map merged with syncOptions into spec.syncPolicy.",
+          "additionalProperties": true
+        },
+        "kustomize": {
+          "type": "object",
+          "description": "Optional Argo CD spec.source.kustomize overrides (see Argo CD Kustomize user guide).",
+          "additionalProperties": true
+        },
+        "finalizers": {
+          "type": "array",
+          "description": "Argo CD Application metadata.finalizers (resources finalizer). Omit to use chart default (background).",
+          "default": [
+            "resources-finalizer.argocd.argoproj.io/background"
+          ],
+          "minItems": 1,
+          "maxItems": 1,
+          "items": {
+            "type": "string",
+            "enum": [
+              "resources-finalizer.argocd.argoproj.io/background",
+              "resources-finalizer.argocd.argoproj.io/foreground"
+            ]
+          }
+        }
+      }
+    }
+  }
+}
