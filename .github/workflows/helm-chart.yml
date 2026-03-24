@@ -1,0 +1,72 @@
+---
+# Validate charts/rhoso-apps: lint (incl. values.schema.json), helm-unittest,
+# kubeconform on rendered CRs, package.
+# TODO: When release process is defined, persist and publish the chart artifact
+# (rhoso-apps-<version>.tgz from `helm package`)—e.g. GitHub Release asset, Helm
+# HTTP repo, or OCI registry—for downloadable installs.
+name: helm-chart
+permissions:
+  contents: read
+on:  # yamllint disable-line rule:truthy
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "charts/**"
+      - ".github/workflows/helm-chart.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "charts/**"
+      - ".github/workflows/helm-chart.yml"
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    env:
+      # Pin tool versions (kubeconform: https://github.com/yannh/kubeconform/releases)
+      KUBECONFORM_VERSION: v0.6.7
+      # helm-unittest plugin: https://github.com/helm-unittest/helm-unittest/releases
+      HELM_UNITTEST_VERSION: "0.7.0"
+      # Kubernetes OpenAPI for built-in kinds; Argo Application uses Datree CRDs-catalog.
+      KUBERNETES_SCHEMA_VERSION: "1.29.0"
+    defaults:
+      run:
+        working-directory: charts/rhoso-apps
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: v3.16.3
+
+      - name: Install helm-unittest plugin
+        run: helm plugin install https://github.com/helm-unittest/helm-unittest.git --version "${HELM_UNITTEST_VERSION}"
+
+      - name: Install kubeconform
+        run: |
+          set -euo pipefail
+          mkdir -p "${HOME}/.local/bin"
+          curl -sSL "https://github.com/yannh/kubeconform/releases/download/${KUBECONFORM_VERSION}/kubeconform-linux-amd64.tar.gz" | tar xz -C /tmp
+          mv /tmp/kubeconform "${HOME}/.local/bin/kubeconform"
+          echo "${HOME}/.local/bin" >> "${GITHUB_PATH}"
+
+      - name: Helm lint
+        run: helm lint . -f values.yaml
+
+      - name: Helm unittest
+        run: helm unittest .
+
+      - name: Helm template (kubeconform)
+        run: |
+          set -euo pipefail
+          helm template rhoso-apps-test . -f values.yaml | kubeconform -summary \
+            -kubernetes-version "${KUBERNETES_SCHEMA_VERSION}" \
+            -schema-location default \
+            -schema-location 'https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json'
+
+      # Produces rhoso-apps-*.tgz; publishing is TODO until release workflow exists (see file header).
+      - name: Helm package
+        run: helm package .

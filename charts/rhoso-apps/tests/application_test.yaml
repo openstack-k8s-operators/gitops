@@ -1,0 +1,78 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/main/schema/helm-testsuite.json
+suite: rhoso-apps application template
+templates:
+  - application.yaml
+tests:
+  # Helm merges values; we cannot replace the whole applications map from tests.
+  # Assert on one real Application from values.yaml via documentSelector.
+  - it: renders openstack-controlplane Application from default values
+    values:
+      - ../values.yaml
+    documentSelector:
+      path: metadata.name
+      value: openstack-controlplane
+    asserts:
+      - isKind:
+          of: Application
+      - equal:
+          path: apiVersion
+          value: argoproj.io/v1alpha1
+      - equal:
+          path: metadata.name
+          value: openstack-controlplane
+      - equal:
+          path: metadata.namespace
+          value: openshift-gitops
+      - equal:
+          path: metadata.annotations["argocd.argoproj.io/sync-wave"]
+          value: "10"
+      - equal:
+          path: spec.project
+          value: default
+      - equal:
+          path: spec.source.repoURL
+          value: https://github.com/openstack-k8s-operators/gitops
+      - equal:
+          path: spec.source.path
+          value: examples/controlplane
+      - equal:
+          path: spec.source.targetRevision
+          value: v0.1.0
+      - equal:
+          path: spec.destination.server
+          value: https://kubernetes.default.svc
+      - equal:
+          path: spec.syncPolicy.syncOptions[0]
+          value: Prune=true
+
+  - it: fails values schema when repoURL is missing
+    set:
+      applicationNamespace: openshift-gitops
+      destinationServer: https://kubernetes.default.svc
+      applications:
+        bad:
+          enabled: true
+          path: "."
+          targetRevision: main
+          syncWave: "0"
+          syncOptions: []
+    asserts:
+      - failedTemplate:
+          errorPattern: repoURL
+
+  - it: fails values schema when destinationServer is not an https URI
+    set:
+      applicationNamespace: openshift-gitops
+      destinationServer: http://insecure.example
+      applications:
+        a:
+          enabled: true
+          repoURL: https://github.com/example/repo
+          path: "."
+          targetRevision: main
+          syncWave: "0"
+          syncOptions: []
+    asserts:
+      - failedTemplate:
+          errorPattern: destinationServer
