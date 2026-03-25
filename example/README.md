@@ -12,7 +12,7 @@ where the overlay includes `components/argocd/annotations`).
 | Directory | Role |
 | --------- | ---- |
 | [openstack-operator](./openstack-operator/) | Foundational OpenStack operators: CDN catalog + pinned CSV, OLM subscription from `architecture` `olm-openstack-subscriptions`, InstallPlan approval Job, RBAC. |
-| [openstack-operator-cr](./openstack-operator-cr/) | Main OpenStack custom resource (placeholder until a component exists). |
+| [openstack-operator-cr](./openstack-operator-cr/) | Main `OpenStack` custom resource in `openstack-operators`. |
 | [openstack-networks](./openstack-networks/) | Underlying networks: NNCP, NAD, NetConfig, MetalLB pools / advertisements, etc. |
 | [openstack-controlplane](./openstack-controlplane/) | `OpenStackControlPlane` and optional watcher service (networking is a separate overlay). |
 | [openstack-dataplane](./openstack-dataplane/) | Data plane node set and deployment. |
