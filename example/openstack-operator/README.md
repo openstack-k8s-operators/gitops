@@ -49,5 +49,5 @@ Clusters must be able to pull images from `registry.redhat.io` (pull secret / gl
 ## Related
 
 - [`components/utilities/`](../../components/utilities/) for shared helper components (including InstallPlan approval).
-- `openstack-operator-cr` example: main `OpenStack` CR (separate overlay).
+- [`openstack-operator-cr`](../openstack-operator-cr/): main `OpenStack` CR (separate overlay).
 - `example/dependencies` for other OLM-related dependencies (MetalLB, NMState, cert-manager, etc.).

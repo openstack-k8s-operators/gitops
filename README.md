@@ -89,7 +89,8 @@ Creates the main OpenStack custom resource that defines the overall OpenStack de
 
 #### Key resources
 
-* **OpenStack CR:** Primary configuration object in `openstack-operators` namespace
+* **OpenStack CR:** Primary configuration object in `openstack-operators` namespace  
+* **Example overlay:** [`example/openstack-operator-cr/`](example/openstack-operator-cr/)
 
 ### openstack-networks
 
