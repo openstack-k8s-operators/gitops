@@ -1,0 +1,4 @@
+---
+- op: add
+  path: /data/openstack-operator-version
+  value: "openstack-operator.v1.0.16"

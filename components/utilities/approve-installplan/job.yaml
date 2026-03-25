@@ -1,0 +1,160 @@
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: approve-openstack-installplan
+  namespace: openshift-gitops
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  backoffLimit: 1
+  template:
+    spec:
+      containers:
+        - name: installplan-approver
+          image: registry.redhat.io/openshift4/ose-tools-rhel9:latest
+          env:
+            - name: OS_OPERATORS_NAMESPACE
+              value: "openstack-operators"
+            - name: OS_NAMESPACE
+              value: "openstack"
+            - name: RETRIES
+              value: "30"
+            - name: DELAY
+              value: "10"
+            - name: INSTALL_PLAN_RETRIES
+              value: "60"
+            - name: DEBUG
+              value: "true"
+          command:
+            - /bin/bash
+            - -c
+            - |
+              set -eo pipefail
+              if [ "${DEBUG}" = "true" ]; then
+                set -x
+              fi
+              # --- Configuration with defaults ---
+              # Namespace where the OpenStack operators are installed.
+              OS_OPERATORS_NAMESPACE=${OS_OPERATORS_NAMESPACE:-"openstack-operators"}
+              # Namespace where the OpenStack control plane is deployed and the OpenStackVersion CR exists.
+              OS_NAMESPACE=${OS_NAMESPACE:-"openstack"}
+              # Default number of retries for most checks.
+              RETRIES=${RETRIES:-60}
+              # Number of retries specifically for waiting for the InstallPlan to complete.
+              # This is longer because pulling operator images and starting pods can take a significant amount of time.
+              INSTALL_PLAN_RETRIES=${INSTALL_PLAN_RETRIES:-60}
+              # Delay in seconds between retries.
+              DELAY=${DELAY:-10}
+              # ---
+
+              log() {
+                echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) $@" >&2
+              }
+
+              find_and_approve_installplan() {
+                log "Waiting for unapproved InstallPlan..."
+                for i in $(seq 1 $RETRIES); do
+                  install_plan_name=$(oc get installplan -n $OS_OPERATORS_NAMESPACE -o json | jq -r '.items[] | select(.spec.approval=="Manual" and .spec.approved==false) | .metadata.name' | head -n1) || true
+                  [ -n "$install_plan_name" ] && break
+                  log "Attempt $i/$RETRIES: No InstallPlan found, retrying..."
+                  sleep $DELAY
+                done
+
+                if [ -z "$install_plan_name" ]; then
+                  log "Error: No manual InstallPlan found to approve within the time limit."
+                  exit 1
+                fi
+
+                log "Found InstallPlan: $install_plan_name, approving..."
+                oc patch installplan $install_plan_name -n $OS_OPERATORS_NAMESPACE --type merge -p '{"spec":{"approved":true}}' >&2
+                echo "$install_plan_name"
+              }
+
+              wait_for_installplan_completion() {
+                local install_plan_name=$1
+                for i in $(seq 1 $INSTALL_PLAN_RETRIES); do
+                  phase=$(oc get installplan $install_plan_name -n $OS_OPERATORS_NAMESPACE -o jsonpath='{.status.phase}')
+                  if [ "$phase" == "Complete" ]; then
+                    log "InstallPlan completed successfully."
+                    return 0
+                  fi
+                  if [ $i -eq $INSTALL_PLAN_RETRIES ]; then
+                    log "Error: InstallPlan did not complete in time."
+                    exit 1
+                  fi
+                  log "Attempt $i/$INSTALL_PLAN_RETRIES: Status is $phase, retrying..."
+                  sleep $DELAY
+                done
+              }
+
+              wait_for_crd() {
+                log "Waiting for OpenStack CRD to become available..."
+                for i in $(seq 1 $RETRIES); do
+                  if oc get crd openstacks.operator.openstack.org -o jsonpath='{.status.conditions[?(@.type=="Established")].status}' | grep -q True; then
+                    log "OpenStack CRD is Established."
+                    return 0
+                  fi
+                  if [ $i -eq $RETRIES ]; then
+                    log "Error: OpenStack CRD did not become Established in time."
+                    exit 1
+                  fi
+                  log "Attempt $i/$RETRIES: CRD not Established, retrying..."
+                  sleep $DELAY
+                done
+              }
+
+              wait_for_new_version() {
+                log "Waiting for a new OpenStack version to become available..."
+
+                local deployed_version=""
+                for i in $(seq 1 $RETRIES); do
+                  # There should be only one openstackversion CR
+                  deployed_version=$(oc get openstackversion -n $OS_NAMESPACE -o jsonpath='{.items[0].status.deployedVersion}' 2>/dev/null) || true
+                  if [ -n "$deployed_version" ]; then
+                      log "Current deployed version is: $deployed_version"
+                      break
+                  fi
+                  if [ $i -eq $RETRIES ]; then
+                    log "Error: Could not get current deployed version in time."
+                    exit 1
+                  fi
+                  log "Attempt $i/$RETRIES: Waiting for OpenStackVersion resource to get deployedVersion. Retrying..."
+                  sleep $DELAY
+                done
+
+                for i in $(seq 1 $RETRIES); do
+                  available_version=$(oc get openstackversion -n $OS_NAMESPACE -o jsonpath='{.items[0].status.availableVersion}' 2>/dev/null) || true
+                  if [ -n "$available_version" ] && [ "$available_version" != "$deployed_version" ]; then
+                    log "New available version found: $available_version"
+                    return 0
+                  fi
+                  if [ $i -eq $RETRIES ]; then
+                    log "Error: New version did not become available in time."
+                    exit 1
+                  fi
+                  log "Attempt $i/$RETRIES: No new version available yet. Current available is '$available_version'. Retrying..."
+                  sleep $DELAY
+                done
+              }
+
+              # --- Main execution ---
+              log "Starting install_plan_approval"
+              install_plan_name=$(find_and_approve_installplan)
+
+              log "Waiting for InstallPlan '$install_plan_name' to complete..."
+
+              wait_for_installplan_completion "$install_plan_name"
+
+              log "Checking if this is an initial installation or an update..."
+              if oc get openstack openstack -n $OS_OPERATORS_NAMESPACE; then
+                log "OpenStack CR 'openstack' exists. This is an update."
+                wait_for_new_version
+              else
+                log "OpenStack CR 'openstack' does not exist. This is an initial installation."
+                wait_for_crd
+              fi
+
+              log "Job completed successfully."
+      restartPolicy: Never
+      serviceAccountName: openshift-gitops-argocd-application-controller
