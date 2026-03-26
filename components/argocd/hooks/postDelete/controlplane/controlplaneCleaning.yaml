@@ -1,0 +1,44 @@
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: ctlplane
+  namespace: openshift-gitops
+  annotations:
+    argocd.argoproj.io/hook: PostDelete
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
+
+spec:
+  template:
+    spec:
+      serviceAccountName: openshift-gitops-argocd-application-controller
+      restartPolicy: Never
+      containers:
+        - name: wait-and-clean
+          image: registry.redhat.io/openshift4/ose-cli:latest
+          command: ['sh', '-c']
+          args:
+            - |
+              NAMESPACE="openstack"
+              MAX_ATTEMPTS=70   # Number of retries
+              SLEEP_SECONDS=10  # Interval (seconds) between checks
+              attempt=1
+
+              while [ $attempt -le $MAX_ATTEMPTS ]; do
+                # Count pods in the namespace
+                pod_count=$(oc get pods -n "$NAMESPACE" --no-headers | wc -l)
+                if [ "$pod_count" -eq 0 ]; then
+                  echo "All pods have been removed from namespace $NAMESPACE."
+                  break
+                else
+                  echo "Attempt $attempt: $pod_count pods still present in $NAMESPACE."
+                  ((attempt++))
+                  sleep "$SLEEP_SECONDS"
+                fi
+              done
+              [ "$(oc get pods -n "$NAMESPACE" --no-headers | wc -l)" -eq 0 ] || exit 1
+              oc -n openstack delete PersistentVolumeClaim --all
+              oc -n openstack delete VaultStaticSecret --all
+              oc -n openstack delete VaultAuth --all
+              oc -n openstack delete VaultConnection --all
+              oc -n openstack delete Secrets --all
