@@ -1,0 +1,13 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources: []
+
+# No gitops component yet for this slice. See README.md.
+# Future: add components (remote refs and local paths), for example:
+# components:
+#   - https://github.com/openstack-k8s-operators/gitops/components/argocd/annotations?ref=TAG
+#   - https://github.com/openstack-k8s-operators/gitops/components/rhoso/...?ref=TAG
+# Local paths (for "kustomize build" testing):
+#   - ../../components/argocd/annotations
