@@ -5,11 +5,11 @@ kind: Kustomization
 components:
   # Remote refs (for CI/ArgoCD):
   - https://github.com/openstack-k8s-operators/gitops/components/argocd/annotations?ref=v0.1.0
-  - https://github.com/openstack-k8s-operators/gitops/components/rhoso/controlplane?ref=v0.1.0
+  - https://github.com/openstack-k8s-operators/gitops/components/rhoso/controlplane/controlplane?ref=v0.1.0
   - https://github.com/openstack-k8s-operators/gitops/components/rhoso/controlplane/services/watcher?ref=v0.1.0
   # Local paths (for "kustomize build" testing):
   # - ../../components/argocd/annotations
-  # - ../../components/rhoso/controlplane
+  # - ../../components/rhoso/controlplane/controlplane
   # - ../../components/rhoso/controlplane/services/watcher
 
 # Add needed patches according to your infrastructure
