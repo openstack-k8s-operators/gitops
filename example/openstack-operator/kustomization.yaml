@@ -1,0 +1,16 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - catalog
+
+# pin-version must run before the remote OLM component (olm-values feeds replacements).
+# approve-installplan must run after the remote component so the Subscription exists for the sync-wave patch.
+components:
+  - pin-version
+  - https://github.com/openstack-k8s-operators/architecture/lib/olm-openstack-subscriptions/overlays/default?ref=7da5f2e1dc2bfce99e269b0017783679ca405d8c
+  # TODO: replace the local path with a git HTTPS URI, e.g.
+  # https://github.com/openstack-k8s-operators/gitops/components/utilities/approve-installplan?ref=v0.1.0
+  # once that tag includes this component (same pattern as other example overlays).
+  - ../../components/utilities/approve-installplan

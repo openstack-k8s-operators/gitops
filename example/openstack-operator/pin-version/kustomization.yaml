@@ -1,0 +1,9 @@
+---
+# Patches olm-values with a pinned ClusterServiceVersion for spec.startingCSV on the Subscription.
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+patches:
+  - path: patch.yaml
+    target:
+      kind: ConfigMap
+      name: olm-values
