@@ -1,0 +1,21 @@
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: clean-observability
+  namespace: openshift-gitops
+  annotations:
+    argocd.argoproj.io/hook: PostDelete
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
+
+spec:
+  template:
+    spec:
+      serviceAccountName: openshift-gitops-argocd-application-controller
+      restartPolicy: Never
+      containers:
+        - name: clean-observability-csv
+          image: registry.redhat.io/openshift4/ose-cli:latest
+          command: ['sh', '-c']
+          args:
+            - oc get csv -A | awk '/cluster-observability-operator/ {print $1, $2}' | sort -u | xargs -n2 sh -c 'oc -n $0 delete csv $1'
