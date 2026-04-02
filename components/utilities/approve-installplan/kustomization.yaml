@@ -1,0 +1,16 @@
+---
+# Apply this component after the Subscription exists in the build (e.g. after
+# openstack-k8s-operators/architecture lib/olm-openstack-subscriptions).
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+resources:
+  - job.yaml
+  - rbac.yaml
+patches:
+  - target:
+      kind: Subscription
+      name: openstack
+    patch: |-
+      - op: add
+        path: /metadata/annotations/argocd.argoproj.io~1sync-wave
+        value: "0"

@@ -1,0 +1,18 @@
+# local-config: referenced, but not emitted by kustomize
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: olm-values
+  annotations:
+    config.kubernetes.io/local-config: 'true'
+data:
+  openstack-operator-subscription-namespace: "openstack-operators"
+  openstack-operator-channel: "stable-v1.0"
+  openstack-operator-installplanapproval: "Manual"
+  # --- CatalogSource Settings ---
+  openstack-operator-catalog-source: "redhat-operators"
+  openstack-catalog-namespace: "openshift-marketplace"
+  openstack-operator-image: "registry.redhat.io/redhat/redhat-operator-index:v4.18"
+  openstack-operator-display-name: "Red Hat Operators"
+  openstack-operator-publisher: "Red Hat"
