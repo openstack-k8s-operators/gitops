@@ -1,0 +1,84 @@
+---
+# Parameter documentation: charts/rhoso-apps/README.md
+applicationNamespace: openshift-gitops
+destinationServer: https://kubernetes.default.svc
+applications:
+  # Deploy and initialize MetalLB, nmstate, cert-manager.
+  # This covers "Planning your deployment - chapter 3.1.3"
+  # https://docs.redhat.com/en/documentation/red_hat_openstack_services_on_openshift/18.0/html/planning_your_deployment/assembly_infrastructure-and-system-requirements#ref_RHOCP-software-requirements_planning
+  operator-dependencies:
+    enabled: true
+    path: "example/dependencies"
+    repoURL: https://github.com/openstack-k8s-operators/gitops
+    syncOptions:
+      - Prune=true
+    syncWave: "-20"
+    targetRevision: v0.1.0
+  # Deploy openstack-operator.
+  # This covers "Deploying RHOSO - chapter 1"
+  # https://docs.redhat.com/en/documentation/red_hat_openstack_services_on_openshift/18.0/html/deploying_red_hat_openstack_services_on_openshift/assembly_installing-and-preparing-the-openstack-operator
+  openstack-operator:
+    enabled: true
+    path: "TODO"
+    repoURL: https://github.com/openstack-k8s-operators/gitops
+    syncOptions:
+      - Prune=true
+    syncWave: "-20"
+    targetRevision: v0.1.0
+  # Create the main OpenStack Custom Resource.
+  # This covers "Deploying RHOSO - chapter 1"
+  # https://docs.redhat.com/en/documentation/red_hat_openstack_services_on_openshift/18.0/html/deploying_red_hat_openstack_services_on_openshift/assembly_installing-and-preparing-the-openstack-operator
+  openstack-operator-cr:
+    enabled: true
+    path: "TODO"
+    repoURL: https://github.com/openstack-k8s-operators/gitops
+    syncOptions:
+      - Prune=true
+    syncWave: "-15"
+    targetRevision: v0.1.0
+  # Deploy and configure vault-secrets operator.
+  # This covers "Deploying RHOSO - chapter 2.3"
+  # https://docs.redhat.com/en/documentation/red_hat_openstack_services_on_openshift/18.0/html/deploying_red_hat_openstack_services_on_openshift/assembly_preparing-rhocp-for-rhoso#proc_providing-secure-access-to-the-RHOSO-services_preparing
+  openstack-secrets:
+    enabled: true
+    path: "TODO"
+    repoURL: https://github.com/openstack-k8s-operators/gitops
+    syncOptions:
+      - Prune=true
+    syncWave: "-10"
+    targetRevision: v0.1.0
+  # Create underlying networks for controlplane and dataplane.
+  # Covers "Deploying RHOSO - chapter 3"
+  # https://docs.redhat.com/en/documentation/red_hat_openstack_services_on_openshift/18.0/html/deploying_red_hat_openstack_services_on_openshift/assembly_preparing-rhoso-networks_preparing
+  openstack-networks:
+    enabled: true
+    path: "TODO"
+    repoURL: https://github.com/openstack-k8s-operators/gitops
+    syncOptions:
+      - Prune=true
+    syncWave: "0"
+    targetRevision: v0.1.0
+  # Deploy and configure OpenStackControlPlane resource.
+  # Covers "Deploying RHOSO - chapter 4"
+  # https://docs.redhat.com/en/documentation/red_hat_openstack_services_on_openshift/18.0/html/deploying_red_hat_openstack_services_on_openshift/assembly_creating-the-control-plane
+  openstack-controlplane:
+    enabled: true
+    path: "example/controlplane"
+    repoURL: https://github.com/openstack-k8s-operators/gitops
+    finalizers:
+      - resources-finalizer.argocd.argoproj.io/foreground
+    syncOptions:
+      - Prune=true
+    syncWave: "10"
+    targetRevision: v0.1.0
+  # Deploy and configure OpenStackDataPlaneNodeSet and OpenStackDataPlaneDeployment resources.
+  # Covers "Deploying RHOSO - chapter 5"
+  # https://docs.redhat.com/en/documentation/red_hat_openstack_services_on_openshift/18.0/html/deploying_red_hat_openstack_services_on_openshift/assembly_creating-the-data-plane
+  openstack-dataplane:
+    enabled: true
+    path: "example/dataplane"
+    repoURL: https://github.com/openstack-k8s-operators/gitops
+    syncOptions:
+      - Prune=true
+    syncWave: "20"
+    targetRevision: v0.1.0
