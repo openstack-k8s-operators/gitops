@@ -4,8 +4,10 @@ Subscribe to External Secrets Operator on OpenShift via Operator Lifecycle Manag
 
 ## Layout
 
-- **`community/`** — default install: a single `Subscription` in `openshift-operators` from the **community-operators** catalog (`spec.channel: stable`). This is split into a `community` kustomization so the **`redhat/`** overlay can include it without tripping kustomize path or cycle restrictions (you cannot reference a parent directory that contains the overlay, or files outside the overlay path, from `redhat/`).
-- **`redhat/`** — overlay that includes `community`, adds Namespace `external-secrets-operator` and an `OperatorGroup`, and applies a **JSON6902** patch to the community `Subscription` so it targets the Red Hat catalog (`openshift-external-secrets-operator`, `redhat-operators`, `stable-v1`), including `metadata.name` / `metadata.namespace` and stripping `metadata.labels`. Strategic merge does not reliably change Subscription identity fields; use RFC6902 for those edits.
+Manifests live under [`components/secrets/external-secrets-operator/`](../../components/secrets/external-secrets-operator/) in this repository. The `resources/` paths here are thin entrypoints for `oc apply -k` and Argo CD.
+
+- **`components/.../community/`** — default install: a single `Subscription` in `openshift-operators` from the **community-operators** catalog (`spec.channel: stable`). Implemented as a `kind: Component` so the **`redhat/`** overlay can compose it without kustomize path cycles.
+- **`components/.../redhat/`** — overlay that includes `community` as a component, adds Namespace `external-secrets-operator` and an `OperatorGroup`, and applies a **JSON6902** patch to the community `Subscription` so it targets the Red Hat catalog (`openshift-external-secrets-operator`, `redhat-operators`, `stable-v1`), including `metadata.name` / `metadata.namespace` and stripping `metadata.labels`. Strategic merge does not reliably change Subscription identity fields; use RFC6902 for those edits.
 
 ## Choose one catalog
 
@@ -32,7 +34,16 @@ Point `spec.source.path` at:
 - `resources/external-secrets-operator` for the default (community) manifest, or
 - `resources/external-secrets-operator/redhat` for the Red Hat operator.
 
-You can mirror [applications/vault-secrets-operator.yaml](https://github.com/openstack-k8s-operators/gitops/blob/main/applications/vault-secrets-operator.yaml) (sync-wave, repo URL, kustomize components) and set `path` accordingly.
+Use pinned revisions and mirror the pattern in [`applications/external-secrets-operator.yaml`](https://github.com/openstack-k8s-operators/gitops/blob/feature/rhoso-apps-helm-chart/applications/external-secrets-operator.yaml) or [`applications/external-secrets-operator-redhat.yaml`](https://github.com/openstack-k8s-operators/gitops/blob/feature/rhoso-apps-helm-chart/applications/external-secrets-operator-redhat.yaml) (sync-wave, repo URL, `targetRevision`, `kustomize.components` with `?ref=` on remote component URLs).
+
+## Consuming as a component (remote)
+
+From another repo, reference the same content as `components` or `resources` with a **pinned** `ref` (use your branch or tag instead of `feature/rhoso-apps-helm-chart` after merge):
+
+- Community (Component): `https://github.com/openstack-k8s-operators/gitops/components/secrets/external-secrets-operator/community?ref=feature/rhoso-apps-helm-chart`
+- Red Hat (Kustomization base; include under `resources:`): `https://github.com/openstack-k8s-operators/gitops/components/secrets/external-secrets-operator/redhat?ref=feature/rhoso-apps-helm-chart`
+
+See also [`components/secrets/README.md`](../../components/secrets/README.md).
 
 ## Links
 
