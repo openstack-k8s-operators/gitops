@@ -5,6 +5,8 @@ ignore:
   - '*.env'
   - '*.txt'
   - '*.sh'
+  # Helm templates are not valid YAML until rendered (Go templating).
+  - 'charts/**/templates/**'
 
 rules:
   line-length:
