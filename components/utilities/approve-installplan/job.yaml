@@ -217,6 +217,25 @@ spec:
 
               # --- Main execution ---
               log "Starting install_plan_approval"
+
+              # Short-circuit: if the pinned CSV is already installed, there is
+              # no pending InstallPlan to approve. An upgrade plan for a newer
+              # version may exist but we intentionally ignore it (version-gated).
+              pinned_csv=$(oc get subscription "${SUBSCRIPTION_NAME}" \
+                -n "${OS_OPERATORS_NAMESPACE}" \
+                -o jsonpath='{.spec.startingCSV}' 2>/dev/null) || true
+              if [ -n "$pinned_csv" ]; then
+                csv_phase=$(oc get csv "${pinned_csv}" \
+                  -n "${OS_OPERATORS_NAMESPACE}" \
+                  -o jsonpath='{.status.phase}' 2>/dev/null) || true
+                if [ "${csv_phase}" = "Succeeded" ]; then
+                  log "CSV ${pinned_csv} is already installed (phase: Succeeded). Skipping InstallPlan approval."
+                  wait_for_crd
+                  log "Job completed successfully."
+                  exit 0
+                fi
+              fi
+
               install_plan_name=$(find_and_approve_installplan)
 
               log "Waiting for InstallPlan '$install_plan_name' to complete..."
@@ -235,13 +254,4 @@ spec:
 
               log "Job completed successfully."
       restartPolicy: Never
-      # NOTE (FIND-013 / OSPRH-32425): This Job runs as the shared ArgoCD SA which
-      # carries the full gitops-openstack ClusterRole. The approve-installplan pattern
-      # is a CI/lab convenience to handle Manual installPlanApproval without human
-      # intervention; it is not intended for production environments. When OLM v2
-      # (ClusterExtension API) becomes standard, InstallPlan approval is replaced by
-      # version pinning in Git and this Job will no longer be needed. For production
-      # use, create a dedicated SA bound only to a Role granting get/list/patch on
-      # installplans in the target namespace, with automountServiceAccountToken: true
-      # only on the Job pod spec.
-      serviceAccountName: openshift-gitops-argocd-application-controller
+      serviceAccountName: installplan-approver
