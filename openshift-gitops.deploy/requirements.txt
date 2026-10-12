@@ -1,4 +1,4 @@
 # Versions pinned to prevent floating PyPI installs (OSPRH-32419 / FIND-007).
 # Bump versions after testing with the new release.
-ansible==14.3.1
+ansible==14.5.0
 kubernetes==36.0.3
