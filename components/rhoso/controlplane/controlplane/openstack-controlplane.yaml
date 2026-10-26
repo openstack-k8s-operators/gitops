@@ -74,6 +74,7 @@ spec:
         cell1:
           cellDatabaseAccount: nova-cell1
           cellDatabaseInstance: openstack-cell1
+          cellMessageBusInstance: rabbitmq-cell1
           noVNCProxyServiceTemplate:
             enabled: true
             networkAttachments:
