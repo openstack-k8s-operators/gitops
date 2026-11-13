@@ -1,0 +1,50 @@
+---
+# OpenStackAssistant instance (goose runtime with OpenStack/OpenShift MCP tools).
+#
+# Requirements:
+# - a running RHOSO control plane in the openstack namespace
+# - the MCP server sidecar enabled on the OpenStackClient
+#   (components/rhoso/controlplane/services/openstackclient-mcp)
+# - a running OpenStackLightspeed stack reachable at spec.lightspeedStack.baseURL
+#   (components/dependencies/lightspeed-operator and
+#   components/dependencies/lightspeed)
+#
+# The consuming overlay should patch:
+# - spec.lightspeedStack.model with the model configured in OpenStackLightspeed
+#   (<provider_id>/<model_id>, discoverable from the ogx-config ConfigMap)
+# - spec.containerImage if a pinned version is needed
+# https://github.com/openstack-k8s-operators/openstack-operator/blob/main/config/samples/assistant_v1beta1_openstackassistant.yaml
+apiVersion: assistant.openstack.org/v1beta1
+kind: OpenStackAssistant
+metadata:
+  name: openstack-assistant
+  namespace: openstack
+spec:
+  # Agent/harness image whose baked-in entrypoint renders its own config from
+  # the env vars and mounts the operator provides. Pin a specific tag in the
+  # consuming overlay.
+  containerImage: quay.io/openstack-s2i-containers/openstack-goose:master-latest
+  # AI backend: in-cluster OpenStackLightspeed API. The API key is derived
+  # from the pod service-account token, no provider secret is needed here.
+  lightspeedStack:
+    baseURL: https://lightspeed-app-server.openstack-lightspeed.svc:8443/v1
+    # REPLACE with the model configured in OpenStackLightspeed
+    # (<provider_id>/<model_id>)
+    model: REPLACE-WITH-MODEL
+  # MCP servers exposed to the assistant as MCP_SERVER_<name> env vars.
+  # openstackclient is the default OpenStackClient created by the
+  # OpenStackControlPlane; it requires the openstackclient-mcp component.
+  mcpServers:
+    - name: openstack
+      openstackClientRef: openstackclient
+  storage:
+    pvcName: openstack-assistant-home
+  # ConfigMaps projected into the pod for the image entrypoint to consume
+  # (hints, recipes, goose config overlay).
+  extraConfig:
+    - name: openstack-assistant-hints
+      mountPath: /etc/openstack-goose/hints
+    - name: openstack-assistant-recipes
+      mountPath: /etc/openstack-goose/recipes
+    - name: openstack-assistant-goose-config
+      mountPath: /etc/openstack-goose/config-overlay

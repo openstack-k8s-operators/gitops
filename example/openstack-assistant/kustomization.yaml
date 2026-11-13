@@ -1,0 +1,59 @@
+---
+# Example overlay composing the OpenStack Assistant and its dependencies.
+#
+# This example intentionally uses local component paths so it can be built and
+# validated from a checkout. For a deployed environment, prefer remote refs
+# pinned to a tag or hash once released, e.g.:
+#   https://github.com/openstack-k8s-operators/gitops//components/rhoso/assistant?ref=vX.Y.Z
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+components:
+  # 1. OpenStack Lightspeed operator and instance
+  - ../../components/dependencies/lightspeed-operator
+  - ../../components/dependencies/lightspeed
+  # 2. Control plane with MCP server sidecar enabled on OpenStackClient
+  - ../../components/rhoso/controlplane/controlplane
+  - ../../components/rhoso/controlplane/services/openstackclient-mcp
+  # 3. OpenStack Assistant (Goose runtime)
+  - ../../components/rhoso/assistant
+
+patches:
+  # Configure the LLM provider endpoint and model on OpenStackLightspeed.
+  # Remember to also provide the referenced Secret (key: apitoken) in the
+  # openstack-lightspeed namespace out-of-band (e.g. via VSO/ESO).
+  - target:
+      kind: OpenStackLightspeed
+      name: openstack-lightspeed
+    patch: |-
+      - op: replace
+        path: /spec/defaultModel
+        value: granite-3-8b-instruct
+      - op: replace
+        path: /spec/models/0
+        value:
+          name: granite-3-8b-instruct
+          llmEndpoint: https://llm.example.com/v1
+          llmEndpointType: openai
+          llmCredentials: openstack-lightspeed-apitoken
+          modelName: granite-3-8b-instruct
+
+  # Point OpenStackAssistant to the model exposed by lightspeed-stack
+  # (<provider_id>/<model_id>).
+  - target:
+      kind: OpenStackAssistant
+      name: openstack-assistant
+    patch: |-
+      - op: replace
+        path: /spec/lightspeedStack/model
+        value: my-provider/granite-3-8b-instruct
+
+  # Optional: set the storageClass for the assistant PVC if no default
+  # StorageClass is defined on the cluster.
+  # - target:
+  #     kind: PersistentVolumeClaim
+  #     name: openstack-assistant-home
+  #   patch: |-
+  #     - op: add
+  #       path: /spec/storageClassName
+  #       value: lvms-vg1
