@@ -1,0 +1,41 @@
+---
+# Recipes (goose slash commands) projected into the assistant pod via
+# spec.extraConfig.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: openstack-assistant-recipes
+  namespace: openstack
+  labels:
+    app: openstack-assistant
+data:
+  cluster-health.yaml: |
+    version: "1.0.0"
+    title: Cluster Health Status Check
+    description: Run a full cluster health check using subagents for OpenShift and OpenStack categories, then output a combined markdown report
+    prompt: |
+      Run a cluster health check using two summon subagents, then immediately output the final report. Do not launch any additional subagents beyond the two described below.
+
+      Use summon to create these two subagents:
+
+      Subagent 1 - "OpenShift Health": Run each command and summarize the output before moving on:
+      - `oc get nodes -o wide` - note node count, roles, and any NotReady nodes.
+      - `oc get clusteroperators` and `oc get clusterversion` - note any degraded or unavailable operators.
+      - `oc get pv` - note any volumes that are not Bound.
+      - `oc get nncp` - note any degradations.
+      - `oc get events --all-namespaces --sort-by='.lastTimestamp' --field-selector type=Warning | tail -20` - summarize recent warnings.
+      Return a markdown section titled `## OpenShift Health` with findings.
+
+      Subagent 2 - "OpenStack Health": Run each command and summarize the output before moving on:
+      - `oc get openstackcontrolplane -n openstack -o wide` - summarize the control plane status.
+      - `oc get pods -n openstack --field-selector=status.phase!=Running,status.phase!=Succeeded` - note any unhealthy pods.
+      Return a markdown section titled `## OpenStack Health` with findings.
+
+      Once both subagents return their results, immediately output a final markdown report containing:
+      - `# Cluster Health Status Report`
+      - A timestamp
+      - The `## OpenShift Health` section from subagent 1
+      - The `## OpenStack Health` section from subagent 2
+      - A `## Summary` section with an overall assessment (Healthy / Degraded / Critical) and brief explanation of any issues.
+
+      After outputting the report, you are done. Do not run any more commands or subagents.

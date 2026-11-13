@@ -1,0 +1,10 @@
+---
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+
+resources:
+  - openstack-assistant-pvc.yaml
+  - openstack-assistant-hints.yaml
+  - openstack-assistant-recipes.yaml
+  - openstack-assistant-goose-config.yaml
+  - openstackassistant.yaml
