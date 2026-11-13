@@ -1,0 +1,10 @@
+---
+# The OpenStack Lightspeed operator only supports OwnNamespace installs.
+apiVersion: operators.coreos.com/v1
+kind: OperatorGroup
+metadata:
+  name: lightspeed-operator-group
+  namespace: openstack-lightspeed
+spec:
+  targetNamespaces:
+    - openstack-lightspeed

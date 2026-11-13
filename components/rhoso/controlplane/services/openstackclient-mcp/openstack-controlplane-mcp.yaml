@@ -1,0 +1,14 @@
+---
+# Enable the MCP server sidecar (MCPConfig) on the OpenStackClient created by
+# the OpenStackControlPlane. The resulting MCP endpoint is consumed by the
+# OpenStackAssistant (components/rhoso/assistant).
+# https://github.com/openstack-k8s-operators/openstack-operator/blob/main/config/samples/assistant_v1beta1_openstackassistant.yaml
+apiVersion: core.openstack.org/v1beta1
+kind: OpenStackControlPlane
+metadata:
+  name: openstack-control-plane
+spec:
+  openstackclient:
+    template:
+      mcp:
+        enabled: true

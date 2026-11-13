@@ -1,0 +1,17 @@
+---
+# Goose configuration overlay projected into the assistant pod via
+# spec.extraConfig.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: openstack-assistant-goose-config
+  namespace: openstack
+  labels:
+    app: openstack-assistant
+data:
+  config.yaml: |
+    extensions:
+      summon:
+        enabled: true
+      todo:
+        enabled: true

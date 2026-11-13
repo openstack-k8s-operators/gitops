@@ -1,0 +1,16 @@
+---
+# Persistent storage for the assistant working directory (sessions, state).
+# The storage class should be patched by the consuming overlay.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: openstack-assistant-home
+  namespace: openstack
+  labels:
+    app: openstack-assistant
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
