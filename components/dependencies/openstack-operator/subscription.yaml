@@ -1,0 +1,14 @@
+---
+apiVersion: operators.coreos.com/v1alpha1
+kind: Subscription
+metadata:
+  name: openstack
+  namespace: openstack-operators
+spec:
+  channel: stable-v1.0
+  installPlanApproval: Manual
+  name: openstack-operator
+  # Rely on the catalog OpenShift ships on subscribed clusters instead of
+  # pinning a CatalogSource image to a specific OCP version. See README.md.
+  source: redhat-operators
+  sourceNamespace: openshift-marketplace
