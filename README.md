@@ -159,6 +159,40 @@ Provides the base for the OpenStackDataplaneNodeSet and OpenStackDataPlaneDeploy
 The CRs are extracted from the
 [RHOSO official documentation](https://docs.redhat.com/en/documentation/red_hat_openstack_services_on_openshift/18.0/html/deploying_red_hat_openstack_services_on_openshift/assembly_creating-the-data-plane)
 
+### OpenStack Assistant / OpenStack Lightspeed
+
+Provides the optional building blocks to deploy the OpenStack Assistant (AI
+assistant for OpenStack, based on Goose) and its dependencies. Each brick is
+independent and opt-in:
+
+| Component | Purpose |
+|-----------|---------|
+| `components/dependencies/lightspeed-operator` | Deploys the OpenStack Lightspeed operator: `openstack-lightspeed` namespace, CatalogSource, OperatorGroup and Subscription (community catalog, `alpha` channel) |
+| `components/dependencies/lightspeed` | Creates an `OpenStackLightspeed` instance (LLM inference stack). The consuming overlay must patch the LLM endpoint/model and provide the `apitoken` Secret out-of-band (e.g. via VSO/ESO) |
+| `components/rhoso/controlplane/services/openstackclient-mcp` | Patches the `OpenStackControlPlane` to enable the MCP server sidecar (`spec.openstackclient.template.mcp`) on its `OpenStackClient` |
+| `components/rhoso/assistant` | Creates the `OpenStackAssistant` CR (goose runtime) with its PVC, hints/recipes/goose-config ConfigMaps, wired to the OpenStackClient MCP server and the Lightspeed stack |
+
+Example overlay:
+
+```yaml
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+components:
+  - https://github.com/openstack-k8s-operators/gitops//components/dependencies/lightspeed-operator?ref=TAG
+  - https://github.com/openstack-k8s-operators/gitops//components/dependencies/lightspeed?ref=TAG
+  - https://github.com/openstack-k8s-operators/gitops//components/rhoso/controlplane/controlplane?ref=TAG
+  - https://github.com/openstack-k8s-operators/gitops//components/rhoso/controlplane/services/openstackclient-mcp?ref=TAG
+  - https://github.com/openstack-k8s-operators/gitops//components/rhoso/assistant?ref=TAG
+# Patch spec.lightspeedStack.model and the OpenStackLightspeed LLM
+# endpoint/model for your environment.
+```
+
+See the
+[OpenStackAssistant documentation](https://github.com/openstack-k8s-operators/openstack-operator/blob/main/config/samples/assistant_v1beta1_openstackassistant.yaml)
+and the
+[OpenStack Lightspeed operator docs](https://github.com/openstack-k8s-operators/lightspeed-operator/tree/main/docs)
+for details.
+
 ### ArgoCD sync-wave annotation
 These annotations enable ArgoCD to determine the order that resources are created for the whole RHOSO cloud.
 [Learn more about sync-waves](https://argo-cd.readthedocs.io/en/stable/user-guide/sync-waves/)
