@@ -4,8 +4,8 @@ kind: Kustomization
 
 components:
   # Remote refs (for CI/ArgoCD):
-  - https://github.com/openstack-k8s-operators/gitops/components/argocd/annotations?ref=v0.3.1
-  - https://github.com/openstack-k8s-operators/gitops/components/rhoso/dataplane?ref=v0.3.1
+  - https://github.com/openstack-k8s-operators/gitops/components/argocd/annotations?ref=v0.3.6
+  - https://github.com/openstack-k8s-operators/gitops/components/rhoso/dataplane?ref=v0.3.6
   # Local paths (for "kustomize build" testing):
   # - ../../components/argocd/annotations
   # - ../../components/rhoso/dataplane
