@@ -56,7 +56,7 @@ Or remotely, pinned to a ref of this repository:
 
 ```yaml
 components:
-  - https://github.com/openstack-k8s-operators/gitops/components/dependencies/openstack-operator?ref=v0.3.5
+  - https://github.com/openstack-k8s-operators/gitops/components/dependencies/openstack-operator?ref=v0.3.6
 ```
 
 ## Patching
