@@ -1,0 +1,10 @@
+---
+# Deploys the openstack-operator Subscription, relying on the catalog that
+# OpenShift ships on every subscribed cluster (redhat-operators). See README.md.
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+
+resources:
+  - namespaces.yaml
+  - operatorgroup.yaml
+  - subscription.yaml
