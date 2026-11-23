@@ -21,7 +21,7 @@ See Red Hat documentation:
 | `catalog/values.yaml` | `ConfigMap` `olm-values` (channel, `redhat-operators`, index image, Manual approval) |
 | `pin-version/` | Adds `data.openstack-operator-version` for `spec.startingCSV` |
 | Remote component | `architecture` `olm-openstack-subscriptions/overlays/default` (pinned git ref in `kustomization.yaml`) |
-| [approve-installplan](https://github.com/openstack-k8s-operators/gitops/tree/v0.3.1/components/utilities/approve-installplan) (`?ref=v0.3.1`) | Shared utility: RBAC, InstallPlan approval `Job`, Subscription sync-wave |
+| [approve-installplan](https://github.com/openstack-k8s-operators/gitops/tree/v0.3.6/components/utilities/approve-installplan) (`?ref=v0.3.6`) | Shared utility: RBAC, InstallPlan approval `Job`, Subscription sync-wave |
 
 Component order in `kustomization.yaml` matters: the version pin runs before the remote OLM
 component; the approval `Component` runs after it so the Subscription exists when the sync-wave patch

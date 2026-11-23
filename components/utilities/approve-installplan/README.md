@@ -17,7 +17,7 @@ runs first, the Subscription sync-wave patch will not apply.
 components:
   - pin-version
   - https://github.com/openstack-k8s-operators/architecture/lib/olm-openstack-subscriptions/overlays/default?ref=COMMIT_SHA
-  - https://github.com/openstack-k8s-operators/gitops/components/utilities/approve-installplan?ref=v0.3.1
+  - https://github.com/openstack-k8s-operators/gitops/components/utilities/approve-installplan?ref=v0.3.6
 ```
 
 Images: `registry.redhat.io/openshift4/ose-tools-rhel9:latest` (Job).

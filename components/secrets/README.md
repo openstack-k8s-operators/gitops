@@ -15,7 +15,7 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources: []
 components:
-  - https://github.com/openstack-k8s-operators/gitops/components/secrets/vault-secrets-operator?ref=v0.3.1
+  - https://github.com/openstack-k8s-operators/gitops/components/secrets/vault-secrets-operator?ref=v0.3.6
 ```
 
 Example including the Red Hat ESO overlay as a resource:
@@ -24,5 +24,5 @@ Example including the Red Hat ESO overlay as a resource:
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
-  - https://github.com/openstack-k8s-operators/gitops/components/secrets/external-secrets-operator/redhat?ref=v0.3.1
+  - https://github.com/openstack-k8s-operators/gitops/components/secrets/external-secrets-operator/redhat?ref=v0.3.6
 ```
