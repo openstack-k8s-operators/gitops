@@ -1,0 +1,16 @@
+---
+# CatalogSource for the OpenStack Lightspeed operator.
+# The operator is community-published and not part of the default OperatorHub
+# catalogs, so it needs its own CatalogSource.
+# The image tag should be pinned by the consuming overlay (avoid :latest).
+# https://github.com/openstack-k8s-operators/lightspeed-operator
+apiVersion: operators.coreos.com/v1alpha1
+kind: CatalogSource
+metadata:
+  name: openstack-lightspeed-catalog
+  namespace: openshift-marketplace
+spec:
+  sourceType: grpc
+  image: quay.io/openstack-lightspeed/operator-catalog:latest
+  displayName: OpenStack Lightspeed Operator
+  publisher: Red Hat

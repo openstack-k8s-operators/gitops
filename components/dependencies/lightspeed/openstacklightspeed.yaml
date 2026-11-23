@@ -1,0 +1,36 @@
+---
+# OpenStackLightspeed instance. Requires the lightspeed-operator component.
+#
+# Before applying, the consuming overlay MUST:
+# - patch spec.defaultModel and spec.models[] with the actual LLM provider,
+#   endpoint and model (see the lightspeed-operator configuration docs):
+#   https://github.com/openstack-k8s-operators/lightspeed-operator/blob/main/docs/configuration.md
+# - provide the Secret referenced by models[].llmCredentials (key: apitoken)
+#   in the openstack-lightspeed namespace, e.g. via the Vault Secrets
+#   Operator or External Secrets Operator components. Never commit it.
+#
+# Only one OpenStackLightspeed instance is allowed, in the namespace where the
+# operator is installed (OwnNamespace mode).
+# When the LLM endpoint uses a private or self-signed certificate, set
+# spec.tlsCACertBundle from the consuming overlay and provide the referenced
+# ConfigMap containing a PEM CA bundle.
+apiVersion: lightspeed.openstack.org/v1beta1
+kind: OpenStackLightspeed
+metadata:
+  name: openstack-lightspeed
+  namespace: openstack-lightspeed
+spec:
+  # Set to the name of the model to use by default; must match one entry
+  # in spec.models[].name.
+  defaultModel: my-model
+  models:
+    - name: my-model
+      # LLM provider endpoint, e.g. https://api.example.com/v1
+      llmEndpoint: https://REPLACE-WITH-LLM-ENDPOINT/v1
+      # Supported types are listed in the lightspeed-operator configuration docs
+      llmEndpointType: openai
+      # Secret (key: apitoken) holding the LLM API token. Must be provided
+      # out-of-band, e.g. via VSO/ESO.
+      llmCredentials: openstack-lightspeed-apitoken
+      # Model name as known by the provider
+      modelName: REPLACE-WITH-MODEL-NAME

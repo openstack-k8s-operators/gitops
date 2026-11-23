@@ -1,0 +1,26 @@
+---
+# Hints projected into the assistant pod via spec.extraConfig.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: openstack-assistant-hints
+  namespace: openstack
+  labels:
+    app: openstack-assistant
+data:
+  hints: |
+    This is an OpenStack deployment project running on an OpenShift cluster.
+
+    ## Environment
+    - Use `oc` (OpenShift CLI) for cluster commands instead of `kubectl`
+
+    ## Important
+    - Only use 'oc' (similar to 'kubectl') commands which *read* data. Do not edit or patch resources.
+
+    ## Recipes
+    Custom slash commands are available. Type `/cluster-health` to run a cluster health check.
+
+    ## Context Management
+    - Keep command outputs short. Use --no-headers, field selectors, and | head/tail to limit output.
+    - Summarize each command output immediately before running the next command.
+    - Do not store raw command output in memory; only retain the summary.
