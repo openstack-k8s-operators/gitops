@@ -1,0 +1,50 @@
+---
+name: Update Tag References
+permissions:
+  contents: write
+  pull-requests: write
+concurrency:
+  group: update-tag-pins-${{ github.ref_name }}
+  cancel-in-progress: true
+on:  # yamllint disable-line rule:truthy
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  patch-references:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout release tag
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+          fetch-depth: 0
+
+      - name: Bump openstack-k8s-operators/gitops ?ref= pin URLs
+        env:
+          NEW_TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          # Only ?ref= on this repo's GitHub URLs (not tree/blob links, not
+          # other hosts, not commit hashes — only vMAJOR.MINOR.PATCH). Literal
+          # TAG/BRANCH placeholders and feature-branch refs are unchanged.
+          VER='v[0-9]+\.[0-9]+\.[0-9]+'
+          REF_RE="(github\\.com/openstack-k8s-operators/gitops[^[:space:]?)\"']*\\?ref=)${VER}"
+          while IFS= read -r -d '' f; do
+            sed -i -E -e "s|${REF_RE}|\\1${NEW_TAG}|g" "$f"
+          done < <(find . -type f \( -name '*.md' -o -name '*.yaml' -o -name '*.yml' \) \
+            ! -path './.git/*' -print0)
+
+      - name: Create pull request
+        uses: peter-evans/create-pull-request@v8.1.1
+        with:
+          branch: chore/update-tag-pins-${{ github.ref_name }}
+          base: main
+          commit-message: 'docs: update gitops pin references to ${{ github.ref_name }}'
+          title: 'docs: update gitops ?ref= pins for ${{ github.ref_name }}'
+          body: |
+            Automated update: set `?ref=` URLs for `github.com/openstack-k8s-operators/gitops`
+            to **${{ github.ref_name }}** after that tag was pushed.
+
+            Please review and merge when checks pass.
